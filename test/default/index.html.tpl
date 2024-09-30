@@ -1,8 +1,8 @@
 <!doctype html>
 <html>
 <head>
-<meta name="google" content="notranslate" />
 <style>
+<meta name="google" content="notranslate" />
 body {
   background: white;
   color: black;  
@@ -28,20 +28,9 @@ body {
 <h1></h1>
 <section class="test" id="test-res"></section>
 <script>
-var performance;
-if (typeof performance !== 'object') {
-  performance = {
-    mark: function(s) { this[s] = new Date() },
-    measure: function(_t, s1, s2) { this.t = this[s2] - this[s1] },
-    getEntriesByName: function() { return [ { duration: this.t } ] }
-  };
-}
-
-var Module = { preRun: function() { performance.mark('bench_start') } };
-
 function runTest(tname) {
     var xhr, expected, hn, idx = 0, passed = true;
-
+    
     function outputReceived(e) {
         var found = e.data;
         var p = document.createElement('p');
@@ -53,11 +42,8 @@ function runTest(tname) {
         document.getElementById('test-res').appendChild(p);
         if (idx >= expected.length) {
             if (passed) {
-                performance.mark('bench_end')
-                performance.measure('bench', 'bench_start', 'bench_end');
-                var duration = Math.round(performance.getEntriesByName('bench')[0].duration);
-                hn.appendChild(document.createTextNode(' - PASSED (time: ' + duration + ' ms)'));
-                hn.className = 'passed';
+                hn.appendChild(document.createTextNode(' - PASSED'));
+                hn.className = 'passed';                    
             } else {
                 hn.appendChild(document.createTextNode(' - FAILED'));
                 hn.className = 'err';

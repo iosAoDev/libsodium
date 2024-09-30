@@ -4,7 +4,6 @@
    This file is adapted from amd64-51/fe25519_square.s:
    Adding loop to perform n squares.
 */
-#include "private/asm_cet.h"
 #include "fe51_namespace.h"
 #include "consts_namespace.h"
 .p2align 5
@@ -22,7 +21,6 @@ ASM_HIDE_SYMBOL _fe51_nsquare
 fe51_nsquare:
 _fe51_nsquare:
 
-_CET_ENDBR
 mov %rsp,%r11
 and $31,%r11
 add $64,%r11

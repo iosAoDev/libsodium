@@ -8,7 +8,6 @@
 
 #define SODIUM_LIBRARY_VERSION_MAJOR @SODIUM_LIBRARY_VERSION_MAJOR@
 #define SODIUM_LIBRARY_VERSION_MINOR @SODIUM_LIBRARY_VERSION_MINOR@
-@SODIUM_LIBRARY_MINIMAL_DEF@
 
 #ifdef __cplusplus
 extern "C" {
@@ -22,9 +21,6 @@ int         sodium_library_version_major(void);
 
 SODIUM_EXPORT
 int         sodium_library_version_minor(void);
-
-SODIUM_EXPORT
-int         sodium_library_minimal(void);
 
 #ifdef __cplusplus
 }

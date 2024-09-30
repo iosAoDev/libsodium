@@ -131,15 +131,15 @@ main(void)
     printf("\n");
 
     assert(crypto_generichash_blake2b_salt_personal
-           (guard_page, 0,
+           (NULL, 0,
             in, (unsigned long long) sizeof in,
             k, sizeof k, NULL, NULL) == -1);
     assert(crypto_generichash_blake2b_salt_personal
-           (guard_page, crypto_generichash_BYTES_MAX + 1,
+           (NULL, crypto_generichash_BYTES_MAX + 1,
             in, (unsigned long long) sizeof in,
             k, sizeof k, NULL, NULL) == -1);
     assert(crypto_generichash_blake2b_salt_personal
-           (guard_page, (unsigned long long) sizeof in,
+           (NULL, (unsigned long long) sizeof in,
             in, (unsigned long long) sizeof in,
             k, crypto_generichash_KEYBYTES_MAX + 1, NULL, NULL) == -1);
 

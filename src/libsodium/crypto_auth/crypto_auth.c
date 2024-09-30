@@ -1,6 +1,5 @@
 
 #include "crypto_auth.h"
-#include "randombytes.h"
 
 size_t
 crypto_auth_bytes(void)
@@ -32,10 +31,4 @@ crypto_auth_verify(const unsigned char *h, const unsigned char *in,
                    unsigned long long inlen,const unsigned char *k)
 {
     return crypto_auth_hmacsha512256_verify(h, in, inlen, k);
-}
-
-void
-crypto_auth_keygen(unsigned char k[crypto_auth_KEYBYTES])
-{
-    randombytes_buf(k, crypto_auth_KEYBYTES);
 }

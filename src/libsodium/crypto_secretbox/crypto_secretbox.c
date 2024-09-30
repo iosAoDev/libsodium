@@ -1,6 +1,5 @@
 
 #include "crypto_secretbox.h"
-#include "randombytes.h"
 
 size_t
 crypto_secretbox_keybytes(void)
@@ -32,12 +31,6 @@ crypto_secretbox_macbytes(void)
     return crypto_secretbox_MACBYTES;
 }
 
-size_t
-crypto_secretbox_messagebytes_max(void)
-{
-    return crypto_secretbox_MESSAGEBYTES_MAX;
-}
-
 const char *
 crypto_secretbox_primitive(void)
 {
@@ -58,10 +51,4 @@ crypto_secretbox_open(unsigned char *m, const unsigned char *c,
                       const unsigned char *k)
 {
     return crypto_secretbox_xsalsa20poly1305_open(m, c, clen, n, k);
-}
-
-void
-crypto_secretbox_keygen(unsigned char k[crypto_secretbox_KEYBYTES])
-{
-    randombytes_buf(k, crypto_secretbox_KEYBYTES);
 }
