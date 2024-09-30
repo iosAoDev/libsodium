@@ -3,7 +3,12 @@
 #include <sys/types.h>
 
 #include <limits.h>
-#include <signal.h>
+#ifdef HAVE_CATCHABLE_SEGV
+# include <signal.h>
+#endif
+#ifndef _WIN32
+# include <unistd.h>
+#endif
 
 #define TEST_NAME "sodium_utils3"
 #include "cmptest.h"
@@ -12,48 +17,71 @@
 # warning The sodium_utils3 test is expected to fail with address sanitizer
 #endif
 
-__attribute__ ((noreturn)) static void segv_handler(int sig)
+__attribute__((noreturn)) static void
+segv_handler(int sig)
 {
     (void) sig;
 
     printf("Intentional segfault / bus error caught\n");
     printf("OK\n");
-#ifdef SIGSEGV
+#ifdef SIG_DFL
+# ifdef SIGPROT
+    signal(SIGPROT, SIG_DFL);
+# endif
+# ifdef SIGSEGV
     signal(SIGSEGV, SIG_DFL);
-#endif
-#ifdef SIGBUS
+# endif
+# ifdef SIGBUS
     signal(SIGBUS, SIG_DFL);
-#endif
-#ifdef SIGABRT
+# endif
+# ifdef SIGABRT
     signal(SIGABRT, SIG_DFL);
+# endif
 #endif
-    exit(0);
+    _exit(0);
 }
 
-int main(void)
+int
+main(void)
 {
-    void *buf;
+    void * buf;
     size_t size;
 
-#ifdef SIGSEGV
+#ifdef BENCHMARKS
+    return 0;
+#endif
+
+#ifdef SIG_DFL
+# ifdef SIGPROT
+    signal(SIGPROT, segv_handler);
+# endif
+# ifdef SIGSEGV
     signal(SIGSEGV, segv_handler);
-#endif
-#ifdef SIGBUS
+# endif
+# ifdef SIGBUS
     signal(SIGBUS, segv_handler);
-#endif
-#ifdef SIGABRT
+# endif
+# ifdef SIGABRT
     signal(SIGABRT, segv_handler);
+# endif
 #endif
     size = 1U + randombytes_uniform(100000U);
-    buf = sodium_malloc(size);
+    buf  = sodium_malloc(size);
     assert(buf != NULL);
+
+/* old versions of asan emit a warning because they don't support mlock*() */
+#ifndef __SANITIZE_ADDRESS__
     sodium_mprotect_noaccess(buf);
     sodium_mprotect_readwrite(buf);
-#ifndef __EMSCRIPTEN__
-    sodium_memzero(((unsigned char *)buf) - 8, 8U);
+#endif
+
+#if defined(HAVE_CATCHABLE_SEGV) && !defined(__EMSCRIPTEN__) && !defined(__SANITIZE_ADDRESS__)
+    sodium_memzero(((unsigned char *) buf) - 8, 8U);
     sodium_mprotect_readonly(buf);
     sodium_free(buf);
     printf("Underflow not caught\n");
+#else
+    segv_handler(0);
 #endif
     return 0;
 }

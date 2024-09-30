@@ -3,7 +3,12 @@
 #include <sys/types.h>
 
 #include <limits.h>
-#include <signal.h>
+#ifdef HAVE_CATCHABLE_SEGV
+# include <signal.h>
+#endif
+#ifndef _WIN32
+# include <unistd.h>
+#endif
 
 #define TEST_NAME "sodium_utils2"
 #include "cmptest.h"
@@ -12,29 +17,44 @@
 # warning The sodium_utils2 test is expected to fail with address sanitizer
 #endif
 
-__attribute__ ((noreturn)) static void segv_handler(int sig)
+#undef sodium_malloc
+#undef sodium_free
+#undef sodium_allocarray
+
+__attribute__((noreturn)) static void
+segv_handler(int sig)
 {
     (void) sig;
 
     printf("Intentional segfault / bus error caught\n");
     printf("OK\n");
-#ifdef SIGSEGV
+#ifdef SIG_DFL
+# ifdef SIGPROT
+    signal(SIGPROT, SIG_DFL);
+# endif
+# ifdef SIGSEGV
     signal(SIGSEGV, SIG_DFL);
-#endif
-#ifdef SIGBUS
+# endif
+# ifdef SIGBUS
     signal(SIGBUS, SIG_DFL);
-#endif
-#ifdef SIGABRT
+# endif
+# ifdef SIGABRT
     signal(SIGABRT, SIG_DFL);
+# endif
 #endif
-    exit(0);
+    _exit(0);
 }
 
-int main(void)
+int
+main(void)
 {
-    void *buf;
-    size_t size;
-    unsigned int i;
+    void         *buf;
+    size_t        size;
+    unsigned int  i;
+
+#ifdef BENCHMARKS
+    return 0;
+#endif
 
     if (sodium_malloc(SIZE_MAX - 1U) != NULL) {
         return 1;
@@ -57,33 +77,44 @@ int main(void)
     sodium_free(NULL);
     for (i = 0U; i < 10000U; i++) {
         size = 1U + randombytes_uniform(100000U);
-        buf = sodium_malloc(size);
+        buf  = sodium_malloc(size);
         assert(buf != NULL);
         memset(buf, i, size);
         sodium_mprotect_noaccess(buf);
         sodium_free(buf);
     }
     printf("OK\n");
-
-#ifdef SIGSEGV
+#ifdef SIG_DFL
+# ifdef SIGPROT
+    signal(SIGPROT, segv_handler);
+# endif
+# ifdef SIGSEGV
     signal(SIGSEGV, segv_handler);
-#endif
-#ifdef SIGBUS
+# endif
+# ifdef SIGBUS
     signal(SIGBUS, segv_handler);
-#endif
-#ifdef SIGABRT
+# endif
+# ifdef SIGABRT
     signal(SIGABRT, segv_handler);
+# endif
 #endif
     size = 1U + randombytes_uniform(100000U);
-    buf = sodium_malloc(size);
+    buf  = sodium_malloc(size);
     assert(buf != NULL);
+
+/* old versions of asan emit a warning because they don't support mlock*() */
+#ifndef __SANITIZE_ADDRESS__
     sodium_mprotect_readonly(buf);
     sodium_mprotect_readwrite(buf);
-#ifndef __EMSCRIPTEN__
-    sodium_memzero(((unsigned char *)buf) + size, 1U);
+#endif
+
+#if defined(HAVE_CATCHABLE_SEGV) && !defined(__EMSCRIPTEN__) && !defined(__SANITIZE_ADDRESS__)
+    sodium_memzero(((unsigned char *) buf) + size, 1U);
     sodium_mprotect_noaccess(buf);
     sodium_free(buf);
     printf("Overflow not caught\n");
+#else
+    segv_handler(0);
 #endif
     return 0;
 }
